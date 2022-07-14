@@ -1,5 +1,5 @@
 const userRepo = require("./user.repository");
-const { getUserByEmail } = require("../user/user.repository");
+const { getUserByEmail, getUserWithRole } = require("../user/user.repository");
 
 const createUser = async (user) => {
   try {
@@ -17,6 +17,15 @@ const findUserWithPassword = async (email) => {
   try {
     const result = await getUserByEmail(email);
     return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
+const findUserWithRole = async (id) => {
+  try {
+    const user = await getUserWithRole(id);
+    return user.rows[0];
   } catch (err) {
     throw err;
   }
@@ -55,4 +64,10 @@ const findRole = async ({ roleName, roleID }) => {
   }
 };
 
-module.exports = { createUser, findUser, findUserWithPassword, findRole };
+module.exports = {
+  createUser,
+  findUser,
+  findUserWithPassword,
+  findRole,
+  findUserWithRole,
+};

@@ -12,6 +12,19 @@ const insertUser = async (user) => {
   }
 };
 
+const getUserWithRole = async (id) => {
+  try {
+    if (!id) throw new Error("Invalid user id");
+    const query =
+      "SELECT users.id, email, created_on, roles.name AS role \
+    FROM users JOIN roles ON roles.id = users.role WHERE users.id = $1";
+    const params = [id];
+    return await db.query(query, params);
+  } catch (err) {
+    throw err;
+  }
+};
+
 const getUserByEmail = async (email) => {
   try {
     const result = await db.query("SELECT * FROM users WHERE email = $1", [
@@ -45,4 +58,10 @@ const getRoleByID = async (roleID) => {
   }
 };
 
-module.exports = { insertUser, getUserByEmail, getRoleByName, getRoleByID };
+module.exports = {
+  insertUser,
+  getUserByEmail,
+  getRoleByName,
+  getRoleByID,
+  getUserWithRole,
+};

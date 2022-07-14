@@ -17,4 +17,29 @@ const createSession = async (userID, client) => {
   }
 };
 
-module.exports = { createSession };
+const findSessionByID = async (sessionID) => {
+  try {
+    if (!sessionID) throw new Error("Invalid sessionID");
+
+    const query = "SELECT * FROM sessions WHERE id = $1";
+    const queryValues = [sessionID];
+
+    return await db.query(query, queryValues);
+  } catch (err) {
+    throw err;
+  }
+};
+
+const deleteSessionByID = async (sessionID) => {
+  try {
+    if (!sessionID) throw new Error("Invalid sessionID");
+    const query = "DELETE FROM sessions WHERE id = $1";
+    const queryValues = [sessionID];
+
+    return await db.query(query, queryValues);
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports = { createSession, findSessionByID, deleteSessionByID };

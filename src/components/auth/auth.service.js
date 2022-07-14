@@ -1,10 +1,8 @@
 const bcrypt = require("bcrypt");
 const { pool } = require("../../db");
 const {
-  createUser,
-  findUser,
-  findRole,
   findUserWithPassword,
+  findUserWithRole,
 } = require("../user/user.service");
 const jwtUtils = require("../../utils/jwtUtils");
 const authRepo = require("./auth.repository");
@@ -69,4 +67,54 @@ const authenticate = async (user) => {
   }
 };
 
-module.exports = { serializeUser, authenticate, deSerializeUser };
+const reIssueAccessToken = async (refreshToken) => {
+  try {
+    if (!refreshToken) throw new Error("Invalid refresh Token");
+    const { valid, decrypt } = jwtUtils.verify(refreshToken);
+    if (!valid) return { accessToken: null, role: null, err: "Invalid token" };
+
+    const sessionID = decrypt.sessionID;
+    const session = await authRepo.findSessionByID(sessionID);
+    if ((session.rowCount = 0))
+      return { accessToken: null, role: null, err: "No session" };
+    const userID = session.rows[0].user_id;
+
+    const user = await findUserWithRole(userID);
+    if (!user) throw new Error("Unable to find User");
+
+    const accessToken = await jwtUtils.createAccessToken({
+      userID: user.id,
+      role: user.role,
+      sessionID: sessionID,
+    });
+
+    return { accessToken, role: user.role };
+  } catch (err) {
+    throw err;
+  }
+};
+
+const logout = async (refreshToken, user) => {
+  try {
+    const verified = (refreshToken && jwtUtils.verify(refreshToken)) || null;
+    const sessionID =
+      (verified?.valid && verified?.decrypt?.sessionID) || user?.sessionID;
+
+    if (verified && !verified.valid) return false;
+    if (!sessionID) return false;
+
+    const isDeleted = await authRepo.deleteSessionByID(sessionID);
+    if (isDeleted.rowCount > 0) return true;
+    return false;
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports = {
+  serializeUser,
+  authenticate,
+  deSerializeUser,
+  reIssueAccessToken,
+  logout,
+};
