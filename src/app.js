@@ -12,6 +12,7 @@ const corsOptions = require("./config/cors/corsOptions");
 const authRouter = require("./components/auth").router;
 
 const db = require("./db");
+require("./db/init");
 
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
