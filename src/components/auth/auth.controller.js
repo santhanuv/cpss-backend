@@ -10,7 +10,13 @@ const ms = require("ms");
 
 const userRegistrationHandler = async (req, res) => {
   try {
-    if (!req.body.email || !req.body.password || !req.body.role)
+    if (
+      !req.body.email ||
+      !req.body.password ||
+      !req.body.role ||
+      !req.body.firstName ||
+      !req.body.lastName
+    )
       res.sendStatus(401);
 
     const userRole = await findRole({ roleName: req.body.role });
@@ -19,7 +25,9 @@ const userRegistrationHandler = async (req, res) => {
     const user = {
       email: req.body.email,
       password: req.body.password,
-      role: userRole.id,
+      roleID: userRole.id,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
     };
 
     const serialUser = await serializeUser(user);

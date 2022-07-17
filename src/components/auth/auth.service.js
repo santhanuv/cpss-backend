@@ -13,9 +13,8 @@ const serializeUser = async (user) => {
     const hash = await bcrypt.hash(user.password, SALT_ROUNDS);
 
     return {
-      email: user.email,
+      ...user,
       password: hash,
-      role: user.role,
     };
   } catch (err) {
     throw err;
@@ -25,16 +24,10 @@ const serializeUser = async (user) => {
 const deSerializeUser = async (email, password) => {
   try {
     const user = await findUserWithPassword(email);
-    const { password: passwordHash } = user;
+    const { password: passwordHash, ...dsUser } = user;
     const validUser = await bcrypt.compare(password, passwordHash);
 
-    if (validUser)
-      return {
-        id: user.id,
-        email: user.email,
-        created_on: user.created_on,
-        role: user.role,
-      };
+    if (validUser) return dsUser;
     else return null;
   } catch (err) {
     throw err;

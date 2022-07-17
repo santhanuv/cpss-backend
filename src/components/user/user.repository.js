@@ -3,8 +3,8 @@ const db = require("../../db");
 const insertUser = async (user) => {
   try {
     const result = await db.query(
-      "INSERT INTO users(email, password, role) VALUES($1, $2, $3) RETURNING id, email, role, created_on",
-      [user.email, user.password, user.role]
+      "INSERT INTO users(email, password, role_id, first_name, last_name) VALUES($1, $2, $3, $4, $5) RETURNING id, email, role, created_on",
+      [user.email, user.password, user.roleID, user.firstName, user.lastName]
     );
     return result;
   } catch (err) {

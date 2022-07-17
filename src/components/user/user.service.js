@@ -3,8 +3,7 @@ const { getUserByEmail, getUserWithRole } = require("../user/user.repository");
 
 const createUser = async (user) => {
   try {
-    if (!user.email || !user.password || !user.role)
-      throw new Error("Invalid user");
+    if (!user) throw new Error("Invalid user");
 
     const result = await userRepo.insertUser(user);
     return result;
