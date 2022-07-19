@@ -6,7 +6,7 @@ const createUser = async (user) => {
     if (!user) throw new Error("Invalid user");
 
     const result = await userRepo.insertUser(user);
-    return result;
+    return result.rows[0];
   } catch (err) {
     throw err;
   }
@@ -56,7 +56,7 @@ const findRole = async ({ roleName, roleID }) => {
       return { ...result.rows[0], id: roleID };
     } else {
       const result = await userRepo.getRoleByName(roleName);
-      return { ...result.rows[0], name: roleName };
+      return { ...result.rows[0], role: roleName };
     }
   } catch (err) {
     throw err;

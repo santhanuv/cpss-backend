@@ -1,4 +1,8 @@
-const { createUser, findRole } = require("../user/user.service");
+const {
+  createUser,
+  findRole,
+  findUserWithRole,
+} = require("../user/user.service");
 const {
   serializeUser,
   authenticate,
@@ -8,46 +12,15 @@ const {
 } = require("./auth.service");
 const ms = require("ms");
 
-const userRegistrationHandler = async (req, res) => {
-  try {
-    if (
-      !req.body.email ||
-      !req.body.password ||
-      !req.body.role ||
-      !req.body.firstName ||
-      !req.body.lastName
-    )
-      res.sendStatus(401);
-
-    const userRole = await findRole({ roleName: req.body.role });
-    if (!userRole) res.sendStatus(401);
-
-    const user = {
-      email: req.body.email,
-      password: req.body.password,
-      roleID: userRole.id,
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-    };
-
-    const serialUser = await serializeUser(user);
-    const result = await createUser(serialUser);
-    res.json(result);
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-};
-
 const userLoginHandler = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) throw new Error("No email or password");
     const user = await deSerializeUser(email, password);
-    if (!user) return res.sendStatus(400);
+    if (!user) return res.sendStatus(401);
 
-    const userRole = await findRole({ roleID: user.role });
-    user.role = userRole.name;
+    const userRole = await findRole({ roleID: user.role_id });
+    user.role = userRole.role;
 
     const { accessToken, refreshToken } = await authenticate(user);
 
@@ -70,7 +43,7 @@ const refreshTokenHandler = async (req, res) => {
     const refreshToken = req.cookies?.token;
     const { accessToken, role, err } = await reIssueAccessToken(refreshToken);
 
-    if (!accessToken && err) return res.sendStatus(400);
+    if (!accessToken && err) return res.sendStatus(401);
     else if (!accessToken) return res.sendStatus(500);
 
     return res.json({ accessToken, role });
@@ -84,9 +57,13 @@ const userLogoutHandler = async (req, res) => {
   try {
     const refreshToken = req.cookies?.token;
     const user = req.user;
-    if (!refreshToken && !user?.sessionID) return res.sendStatus(401);
-    const status = await logout(refreshToken, user);
-    if (!status) return res.sendStatus(401);
+    if (!refreshToken && !user) return res.sendStatus(401);
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
 
     res.sendStatus(204);
   } catch (err) {
@@ -96,7 +73,6 @@ const userLogoutHandler = async (req, res) => {
 };
 
 module.exports = {
-  userRegistrationHandler,
   userLoginHandler,
   refreshTokenHandler,
   userLogoutHandler,

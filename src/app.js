@@ -10,6 +10,10 @@ const credentials = require("./middilewares/credentials");
 const corsOptions = require("./config/cors/corsOptions");
 
 const authRouter = require("./components/auth").router;
+const userRouter = require("./components/user").router;
+const studentRouter = require("./components/student").router;
+const batchRouter = require("./components/batch").router;
+const branchRouter = require("./components/branch").router;
 
 const db = require("./db");
 require("./db/init");
@@ -27,6 +31,16 @@ app.get("/api/users", async (req, res) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/user", userRouter);
+app.use("/student", studentRouter);
+app.use("/batch", batchRouter);
+app.use("/branch", branchRouter);
+
+// const branch = require("./components/branch/branch.service");
+// (async () => {
+//   const result = await branch.findBranch({ branchName: "FT" });
+//   console.log(result);
+// })();
 
 app.listen(PORT, () => {
   console.log(`App running at http://localhost:${PORT}`);

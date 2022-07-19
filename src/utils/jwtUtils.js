@@ -5,11 +5,11 @@ const PUBLIC_KEY = process.env.PUBLIC_KEY;
 const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL;
 const REFRESH_TOKEN_TTL = process.env.REFRESH_TOKEN_TTL;
 
-const createRefreshToken = async (sessionID) => {
+const createRefreshToken = async (userID) => {
   try {
-    if (!sessionID) throw new Error("Invalid session_ID");
+    if (!userID) throw new Error("Invalid user ID");
 
-    return jwt.sign({ sessionID }, PRIVATE_KEY, {
+    return jwt.sign({ userID }, PRIVATE_KEY, {
       expiresIn: REFRESH_TOKEN_TTL,
       algorithm: "RS256",
     });

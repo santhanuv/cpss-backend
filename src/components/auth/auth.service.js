@@ -6,20 +6,6 @@ const {
 } = require("../user/user.service");
 const jwtUtils = require("../../utils/jwtUtils");
 const authRepo = require("./auth.repository");
-const SALT_ROUNDS = 10;
-
-const serializeUser = async (user) => {
-  try {
-    const hash = await bcrypt.hash(user.password, SALT_ROUNDS);
-
-    return {
-      ...user,
-      password: hash,
-    };
-  } catch (err) {
-    throw err;
-  }
-};
 
 const deSerializeUser = async (email, password) => {
   try {
@@ -39,12 +25,11 @@ const authenticate = async (user) => {
 
   try {
     await client.query("BEGIN");
-    const session = (await authRepo.createSession(user.id, client)).rows[0];
-    const refreshToken = await jwtUtils.createRefreshToken(session.id);
+    // const session = (await authRepo.createSession(user.id, client)).rows[0];
+    const refreshToken = await jwtUtils.createRefreshToken(user.user_id);
     const accessToken = await jwtUtils.createAccessToken({
-      userID: user.id,
+      userID: user.user_id,
       role: user.role,
-      sessionID: session.id,
     });
 
     if (!refreshToken || !accessToken)
@@ -66,19 +51,14 @@ const reIssueAccessToken = async (refreshToken) => {
     const { valid, decrypt } = jwtUtils.verify(refreshToken);
     if (!valid) return { accessToken: null, role: null, err: "Invalid token" };
 
-    const sessionID = decrypt.sessionID;
-    const session = await authRepo.findSessionByID(sessionID);
-    if ((session.rowCount = 0))
-      return { accessToken: null, role: null, err: "No session" };
-    const userID = session.rows[0].user_id;
+    const userID = decrypt.userID;
 
     const user = await findUserWithRole(userID);
     if (!user) throw new Error("Unable to find User");
 
     const accessToken = await jwtUtils.createAccessToken({
-      userID: user.id,
+      userID: user.user_id,
       role: user.role,
-      sessionID: sessionID,
     });
 
     return { accessToken, role: user.role };
@@ -87,27 +67,26 @@ const reIssueAccessToken = async (refreshToken) => {
   }
 };
 
-const logout = async (refreshToken, user) => {
-  try {
-    const verified = (refreshToken && jwtUtils.verify(refreshToken)) || null;
-    const sessionID =
-      (verified?.valid && verified?.decrypt?.sessionID) || user?.sessionID;
+// const logout = async (refreshToken, user) => {
+//   try {
+//     const verified = (refreshToken && jwtUtils.verify(refreshToken)) || null;
+//     const userID =
+//       (verified?.valid && verified?.decrypt?.sessionID) || user?.sessionID;
 
-    if (verified && !verified.valid) return false;
-    if (!sessionID) return false;
+//     if (verified && !verified.valid) return false;
+//     if (!sessionID) return false;
 
-    const isDeleted = await authRepo.deleteSessionByID(sessionID);
-    if (isDeleted.rowCount > 0) return true;
-    return false;
-  } catch (err) {
-    throw err;
-  }
-};
+//     const isDeleted = await authRepo.deleteSessionByID(sessionID);
+//     if (isDeleted.rowCount > 0) return true;
+//     return false;
+//   } catch (err) {
+//     throw err;
+//   }
+// };
 
 module.exports = {
-  serializeUser,
   authenticate,
   deSerializeUser,
   reIssueAccessToken,
-  logout,
+  // logout,
 };
