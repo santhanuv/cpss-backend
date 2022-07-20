@@ -54,4 +54,58 @@ const insertAcademic = async (
   }
 };
 
-module.exports = { insertAcademic };
+const updateAcademic = async (
+  {
+    studentID,
+    sgpa_s1 = 0.0,
+    sgpa_s2 = 0.0,
+    sgpa_s3 = 0.0,
+    sgpa_s4 = 0.0,
+    sgpa_s5 = 0.0,
+    sgpa_s6 = 0.0,
+    sgpa_s7 = 0.0,
+    sgpa_s8 = 0.0,
+    cgpa = 0.0,
+    current_backlogs = 0,
+    backlog_history = 0,
+    skills = null,
+  },
+  client
+) => {
+  try {
+    if (!studentID) throw new Error("Inavlid Acadmic");
+
+    const queryText =
+      "UPDATE academics SET sgpa_s1 = $1, sgpa_s2 = $2, sgpa_s3 = $3, sgpa_s4 = $4, sgpa_s5 = $5, sgpa_s6 = $6, sgpa_s7 = $7, sgpa_s8 = $8, cgpa = $9, current_backlogs = $10, backlog_history = $11, skills = $12 WHERE student_id = $13;";
+
+    const params = [
+      sgpa_s1,
+      sgpa_s2,
+      sgpa_s3,
+      sgpa_s4,
+      sgpa_s5,
+      sgpa_s6,
+      sgpa_s7,
+      sgpa_s8,
+      cgpa,
+      current_backlogs,
+      backlog_history,
+      skills,
+      studentID,
+    ];
+
+    let result;
+
+    if (client) {
+      result = await client.query(queryText, params);
+    } else {
+      result = await db.query(queryText, params);
+    }
+
+    return result;
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports = { insertAcademic, updateAcademic };
