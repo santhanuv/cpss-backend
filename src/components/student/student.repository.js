@@ -7,18 +7,54 @@ const insertStudent = async (student, client) => {
 
     const params = [
       student.studentID,
-      student.regNO,
-      student.admNO,
+      student.register_no,
+      student.adm_no,
       student.dob,
       student.address,
       student.phone,
       student.gender,
-      student.twelthSchool,
-      student.twelthPercentage,
-      student.tenthSchool,
-      student.tenthPercentage,
+      student.twelth_school,
+      student.twelth_percentage,
+      student.tenth_school,
+      student.tenth_percentage,
       student.branchID,
       student.batchID,
+    ];
+
+    let result;
+
+    if (client) {
+      result = await client.query(queryText, params);
+    } else {
+      result = await db.query(queryText, params);
+    }
+
+    return result;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const updateStudent = async (student, client) => {
+  try {
+    const queryText =
+      "UPDATE students SET register_no = $1, adm_no = $2, dob = $3 , address = $4 , phone = $5, gender = $6, twelth_school = $7, twelth_percentage = $8, tenth_school = $9, tenth_percentage = $10, branch_id = $11, batch_id = $12, status = $13 WHERE student_id = $14;";
+
+    const params = [
+      student.register_no,
+      student.adm_no,
+      student.dob,
+      student.address,
+      student.phone,
+      student.gender,
+      student.twelth_school,
+      student.twelth_percentage,
+      student.tenth_school,
+      student.tenth_percentage,
+      student.branchID,
+      student.batchID,
+      student.status,
+      student.studentID,
     ];
 
     let result;
@@ -48,4 +84,4 @@ const selectStudentWithAcademic = async (studentID) => {
   }
 };
 
-module.exports = { insertStudent, selectStudentWithAcademic };
+module.exports = { insertStudent, selectStudentWithAcademic, updateStudent };
