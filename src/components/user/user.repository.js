@@ -26,6 +26,7 @@ const getUserWithRole = async (id) => {
 
 const getUserByEmail = async (email) => {
   try {
+    console.log(email);
     const result = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
@@ -57,10 +58,26 @@ const getRoleByID = async (roleID) => {
   }
 };
 
+const deleteUser = async (userID, client) => {
+  try {
+    const queryText = "DELETE FROM users WHERE user_id = $1";
+    const params = [userID];
+
+    if (client) {
+      return await client.query(queryText, params);
+    } else {
+      return await db.query(queryText, params);
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   insertUser,
   getUserByEmail,
   getRoleByName,
   getRoleByID,
   getUserWithRole,
+  deleteUser,
 };

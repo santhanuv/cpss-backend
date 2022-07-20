@@ -7,16 +7,16 @@ const insertStudent = async (student, client) => {
 
     const params = [
       student.studentID,
-      student.register_no,
-      student.adm_no,
+      student.regNO,
+      student.admNO,
       student.dob,
       student.address,
       student.phone,
       student.gender,
-      student.twelth_school,
-      student.twelth_percentage,
-      student.tenth_school,
-      student.tenth_percentage,
+      student.twelthSchool,
+      student.twelthPercentage,
+      student.tenthSchool,
+      student.tenthPercentage,
       student.branchID,
       student.batchID,
     ];
@@ -30,6 +30,19 @@ const insertStudent = async (student, client) => {
     }
 
     return result;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const updateStudentStatus = async (studentID, status) => {
+  try {
+    if (!studentID || !status) throw new Error("Invalid Update Request");
+
+    const queryText = "UPDATE students SET status = $1 WHERE student_id = $2;";
+    const params = [status, studentID];
+
+    return await db.query(queryText, params);
   } catch (err) {
     throw err;
   }
@@ -84,4 +97,28 @@ const selectStudentWithAcademic = async (studentID) => {
   }
 };
 
-module.exports = { insertStudent, selectStudentWithAcademic, updateStudent };
+const deleteStudent = async (studentID, client) => {
+  try {
+    const queryTextAcademic = "DELETE FROM academics WHERE student_id = $1";
+    const queryTextStudent = "DELETE FROM students WHERE student_id = $1";
+    const params = [studentID];
+
+    if (client) {
+      await client.query(queryTextAcademic, params);
+      return await client.query(queryTextStudent, params);
+    } else {
+      await client.query(queryTextAcademic, params);
+      return await db.query(queryText, params);
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports = {
+  insertStudent,
+  selectStudentWithAcademic,
+  updateStudent,
+  updateStudentStatus,
+  deleteStudent,
+};

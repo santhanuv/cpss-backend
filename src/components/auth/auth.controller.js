@@ -22,7 +22,11 @@ const userLoginHandler = async (req, res) => {
     const userRole = await findRole({ roleID: user.role_id });
     user.role = userRole.role;
 
-    const { accessToken, refreshToken } = await authenticate(user);
+    const { accessToken, refreshToken, status, err } = await authenticate(user);
+
+    if (err) {
+      return res.status(401).json({ msg: err });
+    }
 
     res.cookie("token", refreshToken, {
       httpOnly: true,
@@ -31,7 +35,7 @@ const userLoginHandler = async (req, res) => {
       secure: true,
     });
 
-    res.json({ accessToken, role: user.role });
+    res.json({ accessToken, role: user.role, status: status });
   } catch (err) {
     console.log(err);
     res.sendStatus(500);
@@ -41,12 +45,14 @@ const userLoginHandler = async (req, res) => {
 const refreshTokenHandler = async (req, res) => {
   try {
     const refreshToken = req.cookies?.token;
-    const { accessToken, role, err } = await reIssueAccessToken(refreshToken);
+    const { accessToken, role, err, status } = await reIssueAccessToken(
+      refreshToken
+    );
 
     if (!accessToken && err) return res.sendStatus(401);
     else if (!accessToken) return res.sendStatus(500);
 
-    return res.json({ accessToken, role });
+    return res.json({ accessToken, role, status });
   } catch (err) {
     console.error(err);
     res.sendStatus(500);

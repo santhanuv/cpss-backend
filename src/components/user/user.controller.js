@@ -15,6 +15,8 @@ const userRegistrationHandler = async (req, res) => {
     const userRole = await findRole({ roleName: req.body.role });
     if (!userRole) return res.sendStatus(400);
 
+    if (userRole.role === "admin") return res.sendStatus(401);
+
     const user = {
       email: req.body.email,
       password: req.body.password,

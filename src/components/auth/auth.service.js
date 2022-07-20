@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const { pool } = require("../../db");
+const { getAdvisorStatus } = require("../advisory/advisory.service");
 const {
   findUserWithPassword,
   findUserWithRole,
@@ -10,6 +11,7 @@ const authRepo = require("./auth.repository");
 const deSerializeUser = async (email, password) => {
   try {
     const user = await findUserWithPassword(email);
+    if (!user) return null;
     const { password: passwordHash, ...dsUser } = user;
     const validUser = await bcrypt.compare(password, passwordHash);
 
@@ -24,19 +26,28 @@ const authenticate = async (user) => {
   const client = await pool.connect();
 
   try {
+    let status = null;
+    if (user.role === "advisor") {
+      const result = await getAdvisorStatus(user.user_id);
+      status = result?.status;
+      if (status && status === "rejected")
+        return { err: "You are rejected by admin." };
+    }
+
     await client.query("BEGIN");
     // const session = (await authRepo.createSession(user.id, client)).rows[0];
     const refreshToken = await jwtUtils.createRefreshToken(user.user_id);
     const accessToken = await jwtUtils.createAccessToken({
       userID: user.user_id,
       role: user.role,
+      status,
     });
 
     if (!refreshToken || !accessToken)
       throw new Error("Unable to create token");
 
     await client.query("COMMIT");
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, status };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
@@ -56,12 +67,21 @@ const reIssueAccessToken = async (refreshToken) => {
     const user = await findUserWithRole(userID);
     if (!user) throw new Error("Unable to find User");
 
+    let status = null;
+    if (user.role === "advisor") {
+      const result = await getAdvisorStatus(user.user_id);
+      status = result?.status;
+      if (status && status === "rejected")
+        return { err: "You are rejected by admin" };
+    }
+
     const accessToken = await jwtUtils.createAccessToken({
       userID: user.user_id,
       role: user.role,
+      status,
     });
 
-    return { accessToken, role: user.role };
+    return { accessToken, role: user.role, status };
   } catch (err) {
     throw err;
   }
