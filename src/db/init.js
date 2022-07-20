@@ -10,7 +10,7 @@ const initializeDB = async () => {
 
   const enum_types = (
     await db.query(
-      "SELECT typname AS typename FROM pg_type WHERE typname = 'student_status_type' OR typname = 'gender_type';"
+      "SELECT typname AS typename FROM pg_type WHERE typname = 'status_type' OR typname = 'gender_type';"
     )
   ).rows;
 
@@ -18,11 +18,11 @@ const initializeDB = async () => {
   const tableNames = tables.map((table) => table.table_name);
 
   // Create types
-  if (enumTypeNames.indexOf("student_status_type") < 0) {
+  if (enumTypeNames.indexOf("status_type") < 0) {
     const result = await db.query(
-      "CREATE TYPE student_status_type AS ENUM ('rejected', 'updated', 'approved');"
+      "CREATE TYPE status_type AS ENUM ('rejected', 'updated', 'approved');"
     );
-    console.log("student_status_type: ", result);
+    console.log("status_type: ", result);
   }
 
   if (enumTypeNames.indexOf("gender_type") < 0) {
@@ -51,17 +51,9 @@ const initializeDB = async () => {
   // Create users table
   if (tableNames.indexOf("users") < 0) {
     const result = await db.query(
-      "CREATE TABLE users(user_id BIGSERIAL PRIMARY KEY, role_id SERIAL NOT NULL, email VARCHAR(255) NOT NULL UNIQUE, password VARCHAR(255) NOT NULL, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(role_id) REFERENCES roles(role_id));"
+      "CREATE TABLE users(user_id BIGSERIAL PRIMARY KEY, role_id INT NOT NULL, email VARCHAR(255) NOT NULL UNIQUE, password VARCHAR(255) NOT NULL, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(role_id) REFERENCES roles(role_id));"
     );
     console.log("users: ", result);
-  }
-
-  // Create staffs table
-  if (tableNames.indexOf("staffs") < 0) {
-    const result = await db.query(
-      "CREATE TABLE staffs(staff_id BIGSERIAL PRIMARY KEY, branch_id SERIAL NOT NULL, employee_no VARCHAR(255) UNIQUE NOT NULL);"
-    );
-    console.log("staffs: ", result);
   }
 
   // Create batches table
@@ -75,7 +67,7 @@ const initializeDB = async () => {
   // Create students table
   if (tableNames.indexOf("students") < 0) {
     const result = await db.query(
-      "CREATE TABLE students(student_id BIGSERIAL PRIMARY KEY, register_no VARCHAR(25) NOT NULL UNIQUE, adm_no VARCHAR(25) NOT NULL UNIQUE, branch_id SERIAL NOT NULL, batch_id SERIAL NOT NULL, dob DATE NOT NULL, address VARCHAR(255) NOT NULL, phone CHAR(10) NOT NULL, gender GENDER_TYPE NOT NULL,twelth_school VARCHAR(255), twelth_percentage FLOAT(2) NOT NULL,tenth_school VARCHAR(255), tenth_percentage FLOAT(2) NOT NULL, status STUDENT_STATUS_TYPE NOT NULL DEFAULT 'updated', FOREIGN KEY(student_id) REFERENCES users(user_id), FOREIGN KEY(branch_id) REFERENCES branches(branch_id), FOREIGN KEY(batch_id) REFERENCES batches(batch_id));"
+      "CREATE TABLE students(student_id INT PRIMARY KEY, register_no VARCHAR(25) NOT NULL UNIQUE, adm_no VARCHAR(25) NOT NULL UNIQUE, branch_id INT NOT NULL, batch_id INT NOT NULL, dob DATE NOT NULL, address VARCHAR(255) NOT NULL, phone CHAR(10) NOT NULL, gender GENDER_TYPE NOT NULL,twelth_school VARCHAR(255), twelth_percentage FLOAT(2) NOT NULL,tenth_school VARCHAR(255), tenth_percentage FLOAT(2) NOT NULL, status STATUS_TYPE NOT NULL DEFAULT 'updated', FOREIGN KEY(student_id) REFERENCES users(user_id), FOREIGN KEY(branch_id) REFERENCES branches(branch_id), FOREIGN KEY(batch_id) REFERENCES batches(batch_id));"
     );
     console.log("students: ", result);
   }
@@ -83,16 +75,32 @@ const initializeDB = async () => {
   // Create academics table
   if (tableNames.indexOf("academics") < 0) {
     const result = await db.query(
-      "CREATE TABLE academics(student_id BIGSERIAL PRIMARY KEY, sgpa_s1 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s2 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s3 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s4 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s5 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s6 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s7 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s8 FLOAT(2) DEFAULT 0.0 NOT NULL,cgpa FLOAT(2) DEFAULT 0.0 NOT NULL, current_backlogs INT DEFAULT 0 NOT NULL, backlog_history INT DEFAULT 0 NOT NULL, skills TEXT,  FOREIGN KEY(student_id) REFERENCES students(student_id));"
+      "CREATE TABLE academics(student_id INT PRIMARY KEY, sgpa_s1 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s2 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s3 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s4 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s5 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s6 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s7 FLOAT(2) DEFAULT 0.0 NOT NULL, sgpa_s8 FLOAT(2) DEFAULT 0.0 NOT NULL,cgpa FLOAT(2) DEFAULT 0.0 NOT NULL, current_backlogs INT DEFAULT 0 NOT NULL, backlog_history INT DEFAULT 0 NOT NULL, skills TEXT,  FOREIGN KEY(student_id) REFERENCES students(student_id));"
     );
     console.log("academics: ", result);
   }
+  // Create advisory table
+  if (tableNames.indexOf("advisory") < 0) {
+    const result = await db.query(
+      "CREATE TABLE advisory (advisory_id BIGSERIAL PRIMARY KEY, advisor_id INT NOT NULL, batch_id INT NOT NULL, branch_id INT NOT NULL, status STATUS_TYPE NOT NULL DEFAULT 'updated', FOREIGN KEY(advisor_id) REFERENCES users(user_id), FOREIGN KEY(batch_id) REFERENCES batches(batch_id), FOREIGN KEY(branch_id) REFERENCES branches(branch_id), UNIQUE(branch_id, batch_id));"
+    );
+    console.log("advisory: ", result);
+  }
 
+  // Create view Student Academics
   if (tableNames.indexOf("student_academics") < 0) {
     const result = await db.query(
       "CREATE VIEW student_academics AS SELECT users.email, users.first_name, users.last_name, std.register_no, std.adm_no, std.dob, std.address, std.phone, std.gender, std.twelth_school, std.twelth_percentage, std.tenth_school, std.tenth_percentage, std.status, academics.*, branches.branch, batches.batch FROM students as std JOIN academics ON std.student_id = academics.student_id JOIN users on std.student_id = users.user_id JOIN batches on batches.batch_id = std.batch_id JOIN branches on branches.branch_id = std.branch_id;"
     );
     console.log("student_academics: ", result);
+  }
+
+  // Create view Advisory Students
+  if (tableNames.indexOf("advisory_students") < 0) {
+    const result = await db.query(
+      "CREATE VIEW advisory_students AS (SELECT users.first_name, users.last_name, std.adm_no, std.status, std.student_id, branches.branch, batches.batch, advisor_id FROM students as std JOIN users ON users.user_id = std.student_id JOIN batches ON std.batch_id = batches.batch_id JOIN branches ON std.branch_id = branches.branch_id JOIN advisory ON (advisory.batch_id, advisory.branch_id) = (std.batch_id, std.branch_id));"
+    );
+    console.log("advisory_students: ", result);
   }
 };
 

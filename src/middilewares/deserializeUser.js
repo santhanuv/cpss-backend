@@ -10,11 +10,12 @@ const deserializeUser = async (req, res, next) => {
 
     const { valid, decrypt } = jwtUtils.verify(accessToken);
     if (valid) {
-      const { userID, role } = decrypt;
+      const { userID, role, status } = decrypt;
       req.userID = decrypt.userID;
       req.user = {
         userID,
         role,
+        status,
       };
       return next();
     }
