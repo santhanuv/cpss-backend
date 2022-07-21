@@ -26,7 +26,6 @@ const getUserWithRole = async (id) => {
 
 const getUserByEmail = async (email) => {
   try {
-    console.log(email);
     const result = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
