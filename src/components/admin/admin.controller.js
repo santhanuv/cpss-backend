@@ -1,6 +1,7 @@
 const {
   updateAdvisorStatusService,
   removeAdvisor,
+  filterStudentData,
 } = require("./admin.service");
 const { getAllAdvisors } = require("../advisory/advisory.service");
 
@@ -52,8 +53,37 @@ const removeAdvisorHandler = async (req, res) => {
   }
 };
 
+const getFilteredData = async (req, res) => {
+  try {
+    const {
+      batch,
+      minCGPA,
+      currentBacklogs,
+      backlogHistory,
+      selectedBranches: branches,
+    } = req.body;
+
+    if (!req.user || req.user.role !== "admin") return res.sendStatus(401);
+    if (!batch) return res.sendStatus(400);
+
+    const result = await filterStudentData({
+      batch,
+      minCGPA,
+      currentBacklogs,
+      backlogHistory,
+      branches,
+    });
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+};
+
 module.exports = {
   getAllAdvisorsHandler,
   updateAdvisorStatusHandler,
   removeAdvisorHandler,
+  getFilteredData,
 };

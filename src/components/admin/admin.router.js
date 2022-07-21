@@ -3,6 +3,11 @@ const deSerializeUser = require("../../middilewares/deserializeUser");
 const adminController = require("./admin.controller");
 
 router.get("/advisors", deSerializeUser, adminController.getAllAdvisorsHandler);
+router.post(
+  "/students/filter",
+  deSerializeUser,
+  adminController.getFilteredData
+);
 router.put(
   "/advisors/:advisorID/status",
   deSerializeUser,
