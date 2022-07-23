@@ -27,13 +27,15 @@ const createAdvisoryHandler = async (req, res) => {
 
     await createAdvisory({
       advisorID,
-      batchID: branchDB.branch_id,
-      branchID: batchDB.batch_id,
+      batchID: batchDB.branch_id,
+      branchID: branchDB.batch_id,
     });
 
     return res.status(201).json({ msg: "advisor created" });
   } catch (err) {
     console.error(err);
+    if (err.detail.includes("already exists"))
+      return res.status(409).send(`Advisor already exists.`);
     res.sendStatus(500);
   }
 };

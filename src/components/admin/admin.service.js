@@ -19,7 +19,7 @@ const getAllAdvisors = async () => {
 const updateAdvisorStatusService = async (advisorID, status) => {
   try {
     const result = await updateAdvisorStatus(advisorID, status);
-    return result.rows;
+    return true;
   } catch (err) {
     throw err;
   }

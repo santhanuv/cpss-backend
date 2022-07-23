@@ -30,8 +30,8 @@ const authenticate = async (user) => {
     if (user.role === "advisor") {
       const result = await getAdvisorStatus(user.user_id);
       status = result?.status;
-      if (status && status === "rejected")
-        return { err: "You are rejected by admin." };
+      // if (status && status === "rejected")
+      //   return { err: "You are rejected by admin." };
     }
 
     await client.query("BEGIN");
