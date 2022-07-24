@@ -1,5 +1,6 @@
 const { createUser, findRole } = require("../user/user.service");
 const { serializeUser } = require("../../utils/serializeUser");
+const dbErrorHandler = require("../../utils/dbErrorHandler");
 
 const userRegistrationHandler = async (req, res) => {
   try {
@@ -33,7 +34,11 @@ const userRegistrationHandler = async (req, res) => {
     return res.json({ msg: "User Created" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ err: err.msg });
+    err = dbErrorHandler(err);
+    return res.status(err.httpCode || 500).json({
+      msg: err.msg,
+      field: { key: err.field?.key, value: err.field?.value },
+    });
   }
 };
 

@@ -30,6 +30,7 @@ const filterSelectStudentData = async ({
 }) => {
   try {
     const branchString = branches.map((branch) => `'${branch}'`).join(", ");
+    console.log("branch: ", branchString);
     const queryText =
       "select * from student_academics where status = 'approved' and batch = $1 and cgpa >= $2 and current_backlogs <= $3 and backlog_history <= $4 and branch IN (" +
       branchString +

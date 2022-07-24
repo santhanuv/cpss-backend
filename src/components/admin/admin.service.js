@@ -6,6 +6,7 @@ const {
 } = require("./admin.repository");
 const { pool } = require("../../db");
 const { deleteUser } = require("../user/user.repository");
+const { findAllBranch } = require("../branch/branch.service");
 
 const getAllAdvisors = async () => {
   try {
@@ -53,6 +54,11 @@ const filterStudentData = async ({
       !currentBacklogs || currentBacklogs === "" ? 100 : currentBacklogs;
     backlogHistory =
       !backlogHistory || backlogHistory === "" ? 100 : backlogHistory;
+
+    const allBranches = await findAllBranch();
+    if (branches.length) {
+      branches = allBranches.filter((branch) => branches.indexOf(branch) > -1);
+    } else branches = allBranches;
 
     const result = await filterSelectStudentData({
       batch,

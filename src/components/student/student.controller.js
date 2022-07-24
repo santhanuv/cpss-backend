@@ -1,4 +1,5 @@
 const db = require("../../db");
+const dbErrorHandler = require("../../utils/dbErrorHandler");
 const { findBatch } = require("../batch/batch.service");
 const { findBranch } = require("../branch/branch.service");
 const {
@@ -81,7 +82,7 @@ const studentRegistrationHandler = async (req, res) => {
       await createAcademic({ ...academic, studentID }, client);
 
       await client.query("COMMIT");
-      res.sendStatus(200);
+      res.sendStatus(201);
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -92,7 +93,11 @@ const studentRegistrationHandler = async (req, res) => {
     // End
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ msg: err.msg });
+    err = dbErrorHandler(err);
+    return res.status(err.httpCode || 500).json({
+      msg: err.code === "23505" ? "Advisor already exists." : err.msg,
+      value: err.field?.value,
+    });
   }
 };
 

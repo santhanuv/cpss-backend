@@ -12,6 +12,7 @@ const {
   removeStudent,
 } = require("../student/student.service");
 const { pool } = require("../../db");
+const dbErrorHandler = require("../../utils/dbErrorHandler");
 
 const createAdvisoryHandler = async (req, res) => {
   try {
@@ -27,16 +28,18 @@ const createAdvisoryHandler = async (req, res) => {
 
     await createAdvisory({
       advisorID,
-      batchID: batchDB.branch_id,
-      branchID: branchDB.batch_id,
+      batchID: batchDB.batch_id,
+      branchID: branchDB.branch_id,
     });
 
     return res.status(201).json({ msg: "advisor created" });
   } catch (err) {
     console.error(err);
-    if (err.detail.includes("already exists"))
-      return res.status(409).send(`Advisor already exists.`);
-    res.sendStatus(500);
+    err = dbErrorHandler(err);
+    res.status(err.httpCode || 500).json({
+      msg: err.msg,
+      field: { key: err.field?.key, value: err.field?.value },
+    });
   }
 };
 
@@ -88,7 +91,7 @@ const updateStudentStatusHandler = async (req, res) => {
     await updateStudentStatusService(student.student_id, {
       status,
     });
-    res.status(200).json({ msg: `${admNO} status updated` });
+    res.status(204).json({ msg: `${admNO} status updated` });
   } catch (err) {
     console.error(err);
     res.sendStatus(500);
