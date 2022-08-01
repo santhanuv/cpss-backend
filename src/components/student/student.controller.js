@@ -95,7 +95,7 @@ const studentRegistrationHandler = async (req, res) => {
     console.log(err);
     err = dbErrorHandler(err);
     return res.status(err.httpCode || 500).json({
-      msg: err.code === "23505" ? "Advisor already exists." : err.msg,
+      msg: err.code === "23505" ? "Student already exists." : err.msg,
       value: err.field?.value,
     });
   }
